@@ -13,7 +13,7 @@ namespace ArgosConsole
         static void Main(string[] args)
         {
 
-            ResourceContainer container = new ResourceContainer("Server 1");
+            Resource container = new Resource("Server 1", "UNKNOWN");
             container.SetProperty("SERVERNAME", "SRVR1");
             container.SetReadTrigger(new ArgosCore.Triggers.FrequencyTrigger(10000));
             Resource service = new Resource("Service1", "UNKNOWN");
@@ -22,15 +22,19 @@ namespace ArgosConsole
             service.SetReader(new HttpReader("$Status_URL$", "$Status_Method$"));
             service.SetReadTrigger(new ArgosCore.Triggers.FrequencyTrigger(5000));
             container.AddResource(service);
+            Guardian guardian = new Guardian();
+            guardian.Resources.Add(container);
 
-            container.StartTrigger();
-            service.StartTrigger();
+            using (ArgosWeb.Web web = new ArgosWeb.Web(guardian))
+            {
+                web.Address = "http://localhost:9000/";
+                web.Start();
 
-            Console.ReadLine();
-            service.StopTrigger();
-            container.StopTrigger();
 
-            Console.ReadLine();
+                container.StartTrigger();
+                service.StartTrigger();
+                Console.ReadLine();
+            }
 
         }
     }

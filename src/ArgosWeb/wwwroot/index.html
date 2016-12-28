@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title></title>
+</head>
+<body>
+    <h1 id="title">Resources Watcher</h1>
+    <div id="resources">
+
+    </div>
+    <script type="text/javascript">
+        (function () {
+            function fetchResources() {
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', '/api/Resources/Get');
+                xhr.send(null);
+                xhr.onreadystatechange = function () {
+                    var READY = 3; // readyState 4 means the request is ready.
+                    var DONE = 4; // readyState 4 means the request is done.
+                    var OK = 200; // status 200 is a successful return.
+                    if (xhr.readyState === DONE || xhr.readyState == READY) {
+                        if (xhr.status === OK) {
+                            console.log("loaded", xhr.responseText);
+                            loadResourcesJson(xhr.responseText);
+                        }
+                        else {
+                            console.log('Error: ' + xhr.status, explainState(xhr.readyState), 'Ready state', xhr.readyState); // An error occurred during the request.
+                        }
+                    } else {
+                        console.log('Error: ' + xhr.status, explainState(xhr.readyState), 'Ready state', xhr.readyState); // An error occurred during the request.
+                    }
+                };
+            }
+            function loadResourcesJson(text) {
+                var resources = JSON.parse(text);
+                for (var i = 0; i < resources.length; i++) {
+                    renderResource(resources[i]);
+                }
+                console.log(resources);
+            }
+            function renderResource(resource, parent) {
+                
+                var div = document.getElementById("res-" + resource.Id);
+                console.log('Rendering', resource, parent, div);
+                if (div === null) {
+                    div = document.createElement("div");
+                    div.id = "res-" + resource.Id;
+                    var label = document.createElement("span");
+                    label.className = "name";
+                    label.innerText = resource.Name;
+                    div.appendChild(label);
+                    var status = document.createElement("div");
+                    status.className = "status";
+                    status.innerText = resource.LastStatus;
+                    console.log('Render', resource.Name, resource.LastStatus, resource.ChildResources.length);
+                    div.appendChild(status);
+                    if (parent != null) {
+                        var parentDiv = document.getElementById("res-" + parent.Id);
+                        if (parentDiv != null) {
+                            parentDiv.appendChild(div);
+                        }
+                    }
+                    else {
+
+                        var resources = document.getElementById("resources");
+                        resources.appendChild(div);
+                    }
+                }
+                else {
+                    var name = document.querySelectorAll('#res-' + resource.Id + ' .name')[0];
+                    name.innerText = resource.Name;
+
+                    var status = document.querySelectorAll('#res-' + resource.Id + ' .status')[0];
+                    status.innerText = resource.LastStatus;
+                }
+                for (var i = 0; i < resource.ChildResources.length; i++) {
+                    console.log('Rendering child', i);
+                    renderResource(resource.ChildResources[i], resource);
+                }
+            }
+            function explainState(state) {
+                switch (state) {
+                    case 0:
+                        return 'UNSENT';
+                    case 1:
+                        return 'OPENED';
+                    case 2:
+                        return 'HEADERS_RECEIVED';
+                    case 3:
+                        return 'LOADING';
+                    case 4:
+                        return 'DONE';
+                    default:
+                        return '';
+                }
+            };
+            setInterval(fetchResources, 30000);
+            fetchResources();
+        })();
+    </script>
+</body>
+</html>

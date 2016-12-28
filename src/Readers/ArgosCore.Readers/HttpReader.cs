@@ -31,8 +31,16 @@ namespace ArgosCore.Readers
             var sendTask = client.SendAsync(new System.Net.Http.HttpRequestMessage(HttpMethod, url));
             sendTask.ContinueWith((response) =>
             {
-                System.Diagnostics.Debug.WriteLine(string.Format("HttpReader {0}.Success: {1}. StatusCode: {2}", resource.Name, !response.IsFaulted, response.Result.StatusCode));
-                resource.SetStatus(response.Result.StatusCode.ToString());
+                if (response.IsFaulted)
+                {
+                    System.Diagnostics.Debug.WriteLine(string.Format("HttpReader {0}.Fault: {1}.", resource.Name, response.Status));
+                    resource.SetStatus(response.Status.ToString());
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine(string.Format("HttpReader {0}.Success: {1}. StatusCode: {2}", resource.Name, !response.IsFaulted, response.Result.StatusCode));
+                    resource.SetStatus(response.Result.StatusCode.ToString());
+                }
             });
         }
 
